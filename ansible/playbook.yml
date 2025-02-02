@@ -1,0 +1,39 @@
+---
+- name: Set up Docker and Docker Compose on EC2
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Docker
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose
+        update_cache: yes
+
+    - name: Ensure Docker service is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add the current user to the Docker group
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+
+
+    - name: Copy docker-compose.yaml to EC2
+      ansible.builtin.copy:
+        src: ../docker-compose/docker-compose.yml
+        dest: /home/ubuntu/docker-compose.yml
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Run Docker Compose
+      become: yes
+      community.docker.docker_compose:
+        project_src: /home/ubuntu
+        state: present
